@@ -26,24 +26,40 @@ jobs:
     #             --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
     #             --region us-east-1
 
-    configure_infrastructure:
-        docker:
-          - image: python:3.9.16
-        steps:
-          - checkout
-          - add_ssh_keys:
-              fingerprints:
-                - "bf:4e:12:af:90:cd:f1:fc:a0:81:46:1f:83:43:6a:06"
-          - run:
-              name: Install Ansible
-              command: |
-                apt-get update -y
-                apt install ansible -y
-                which ansible
-          - run:
-              name: Run Playbook and Configure server
-              command: |
-                ansible-playbook main-remote.yml -i inventory --private-key udacity.pem
+    # configure_infrastructure:
+    #     docker:
+    #       - image: python:3.9.16
+    #     steps:
+    #       - checkout
+    #       - add_ssh_keys:
+    #           fingerprints:
+    #             - "bf:4e:12:af:90:cd:f1:fc:a0:81:46:1f:83:43:6a:06"
+    #       - run:
+    #           name: Install Ansible
+    #           command: |
+    #             apt-get update -y
+    #             apt install ansible -y
+    #             which ansible
+    #       - run:
+    #           name: Run Playbook and Configure server
+    #           command: |
+    #             ansible-playbook main-remote.yml -i inventory --private-key udacity.pem
+
+    smoke_test:
+      docker:
+        - image: alpine:latest
+      steps:
+        - run: apk add --update curl
+        - run:
+            name: smoke test
+            command: |
+              URL="https://blog.udacity.com/"
+              if curl -s --head ${URL}
+              then
+                return 0
+              else
+                return 1
+              fi
 # Sequential workflow
 workflows:
     # Name the workflow
@@ -51,4 +67,5 @@ workflows:
       jobs:
         # - build
         # - create_infrastructure
-        - configure_infrastructure
+        # - configure_infrastructure
+        - smoke_test
